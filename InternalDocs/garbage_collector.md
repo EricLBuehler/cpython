@@ -17,26 +17,26 @@ value returned by this function is always 1 more as the function also has a refe
 to the object when called):
 
 ```pycon
-    >>> x = object()
-    >>> sys.getrefcount(x)
-    2
-    >>> y = x
-    >>> sys.getrefcount(x)
-    3
-    >>> del y
-    >>> sys.getrefcount(x)
-    2
+>>> x = object()
+>>> sys.getrefcount(x)
+2
+>>> y = x
+>>> sys.getrefcount(x)
+3
+>>> del y
+>>> sys.getrefcount(x)
+2
 ```
 
 The main problem with the reference counting scheme is that it does not handle reference
 cycles. For instance, consider this code:
 
 ```pycon
-    >>> container = []
-    >>> container.append(container)
-    >>> sys.getrefcount(container)
-    3
-    >>> del container
+>>> container = []
+>>> container.append(container)
+>>> sys.getrefcount(container)
+3
+>>> del container
 ```
 
 In this example, `container` holds a reference to itself, so even when we remove
@@ -199,26 +199,26 @@ variable `A`, and one self-referencing object which is completely
 unreachable:
 
 ```pycon
-    >>> import gc
-
-    >>> class Link:
-    ...    def __init__(self, next_link=None):
-    ...        self.next_link = next_link
-
-    >>> link_3 = Link()
-    >>> link_2 = Link(link_3)
-    >>> link_1 = Link(link_2)
-    >>> link_3.next_link = link_1
-    >>> A = link_1
-    >>> del link_1, link_2, link_3
-
-    >>> link_4 = Link()
-    >>> link_4.next_link = link_4
-    >>> del link_4
-
-    # Collect the unreachable Link object (and its .__dict__ dict).
-    >>> gc.collect()
-    2
+>>> import gc
+>>> 
+>>> class Link:
+...    def __init__(self, next_link=None):
+...        self.next_link = next_link
+...  
+>>> link_3 = Link()
+>>> link_2 = Link(link_3)
+>>> link_1 = Link(link_2)
+>>> link_3.next_link = link_1
+>>> A = link_1
+>>> del link_1, link_2, link_3
+>>> 
+>>> link_4 = Link()
+>>> link_4.next_link = link_4
+>>> del link_4
+>>> 
+>>> # Collect the unreachable Link object (and its .__dict__ dict).
+>>> gc.collect()
+2
 ```
 
 The GC starts with a set of candidate objects it wants to scan.  In the
@@ -351,7 +351,6 @@ follows these steps in order:
    the reference counts fall to 0, triggering the destruction of all unreachable
    objects.
 
-
 Optimization: incremental collection
 ====================================
 
@@ -440,9 +439,9 @@ These thresholds can be examined using the
 function:
 
 ```pycon
-    >>> import gc
-    >>> gc.get_threshold()
-    (700, 10, 10)
+>>> import gc
+>>> gc.get_threshold()
+(700, 10, 10)
 ```
 
 The content of these generations can be examined using the
@@ -450,79 +449,33 @@ The content of these generations can be examined using the
 specifically in a generation by calling `gc.collect(generation=NUM)`.
 
 ```pycon
-    >>> import gc
-    >>> class MyObj:
-    ...     pass
-    ...
-
-    # Move everything to the old generation so it's easier to inspect
-    # the young generation.
-
-    >>> gc.collect()
-    0
-
-    # Create a reference cycle.
-
-    >>> x = MyObj()
-    >>> x.self = x
-
-    # Initially the object is in the young generation.
-
-    >>> gc.get_objects(generation=0)
-    [..., <__main__.MyObj object at 0x7fbcc12a3400>, ...]
-
-    # After a collection of the youngest generation the object
-    # moves to the old generation.
-
-    >>> gc.collect(generation=0)
-    0
-    >>> gc.get_objects(generation=0)
-    []
-    >>> gc.get_objects(generation=1)
-    []
-    >>> gc.get_objects(generation=2)
-    [..., <__main__.MyObj object at 0x7fbcc12a3400>, ...]
+>>> import gc
+>>> class MyObj:
+...     pass
+...
+>>> # Move everything to the old generation so it's easier to inspect
+>>> # the young generation.
+>>> gc.collect()
+0
+>>> # Create a reference cycle.
+>>> x = MyObj()
+>>> x.self = x
+>>> 
+>>> # Initially the object is in the young generation.
+>>> gc.get_objects(generation=0)
+[..., <__main__.MyObj object at 0x7fbcc12a3400>, ...]
+>>> 
+>>> # After a collection of the youngest generation the object
+>>> # moves to the old generation.
+>>> gc.collect(generation=0)
+0
+>>> gc.get_objects(generation=0)
+[]
+>>> gc.get_objects(generation=1)
+[]
+>>> gc.get_objects(generation=2)
+[..., <__main__.MyObj object at 0x7fbcc12a3400>, ...]
 ```
-
-
-Optimization: visiting reachable objects
-========================================
-
-An object cannot be garbage if it can be reached.
-
-To avoid having to identify reference cycles across the whole heap, we can
-reduce the amount of work done considerably by first moving most reachable objects
-to the `visited` space. Empirically, most reachable objects can be reached from a
-small set of global objects and local variables.
-This step does much less work per object, so reduces the time spent
-performing garbage collection by at least half.
-
-> [!NOTE]
-> Objects that are not determined to be reachable by this pass are not necessarily
-> unreachable. We still need to perform the main algorithm to determine which objects
-> are actually unreachable.
-
-We use the same technique of forming a transitive closure as the incremental
-collector does to find reachable objects, seeding the list with some global
-objects and the currently executing frames.
-
-This phase moves objects to the `visited` space, as follows:
-
-1. All objects directly referred to by any builtin class, the `sys` module, the `builtins`
-module and all objects directly referred to from stack frames are added to a working
-set of reachable objects.
-2. Until this working set is empty:
-   1. Pop an object from the set and move it to the `visited` space
-   2. For each object directly reachable from that object:
-      * If it is not already in `visited` space and it is a GC object,
-        add it to the working set
-
-
-Before each increment of collection is performed, the stacks are scanned
-to check for any new stack frames that have been created since the last
-increment. All objects directly referred to from those stack frames are
-added to the working set.
-Then the above algorithm is repeated, starting from step 2.
 
 
 Optimization: reusing fields to save memory
@@ -573,8 +526,8 @@ of `PyGC_Head` discussed in the `Memory layout and object structure`_ section:
   currently in.  Instead, when that's needed, ad hoc tricks (like the
   `NEXT_MASK_UNREACHABLE` flag) are employed.
 
-Optimization: delayed untracking of containers
-==============================================
+Optimization: delayed untracking containers
+===========================================
 
 Certain types of containers cannot participate in a reference cycle, and so do
 not need to be tracked by the garbage collector. Untracking these objects
@@ -587,36 +540,35 @@ a container:
 2. When the container is examined by the garbage collector.
 
 As a general rule, instances of atomic types aren't tracked and instances of
-non-atomic types (containers, user-defined objects...) are.  However, some
-type-specific optimizations can be present in order to suppress the garbage
-collector footprint of simple instances. Historically, both dictionaries and
-tuples were untracked during garbage collection. Now it is only tuples:
+non-atomic types (containers, user-defined objects...) are.
 
-- Tuples containing only immutable objects (integers, strings etc,
-  and recursively, tuples of immutable objects) do not need to be tracked. The
-  interpreter creates a large number of tuples, many of which will not survive
-  until garbage collection. It is therefore not worthwhile to untrack eligible
-  tuples at creation time. Instead, all tuples except the empty tuple are tracked
-  when created. During garbage collection it is determined whether any surviving
-  tuples can be untracked. A tuple can be untracked if all of its contents are
-  already not tracked. Tuples are examined for untracking when moved from the
-  young to the old generation.
+Tuples containing only immutable objects (integers, strings etc,
+and recursively, tuples of immutable objects) do not need to be tracked. The
+interpreter creates a large number of tuples, many of which will not survive
+until garbage collection. It is therefore not worthwhile to untrack eligible
+tuples at creation time. Instead, all tuples except the empty tuple are tracked
+when created. During garbage collection it is determined whether any surviving
+tuples can be untracked. A tuple can be untracked if all of its contents are
+already not tracked. Tuples are examined for untracking in all garbage collection
+cycles.
 
 The garbage collector module provides the Python function `is_tracked(obj)`, which returns
 the current tracking status of the object. Subsequent garbage collections may change the
 tracking status of the object.
 
 ```pycon
-      >>> gc.is_tracked(0)
-      False
-      >>> gc.is_tracked("a")
-      False
-      >>> gc.is_tracked([])
-      True
-      >>> gc.is_tracked(("a", 1))
-      False
-      >>> gc.is_tracked({"a": 1})
-      True
+>>> gc.is_tracked(0)
+False
+>>> gc.is_tracked("a")
+False
+>>> gc.is_tracked([])
+True
+>>> gc.is_tracked(())
+False
+>>> gc.is_tracked({})
+True
+>>> gc.is_tracked({"a": 1})
+True
 ```
 
 Differences between GC implementations
