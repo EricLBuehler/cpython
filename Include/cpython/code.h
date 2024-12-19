@@ -11,11 +11,11 @@ extern "C" {
 /* Total tool ids available */
 #define  _PY_MONITORING_TOOL_IDS 8
 /* Count of all local monitoring events */
-#define  _PY_MONITORING_LOCAL_EVENTS 10
+#define  _PY_MONITORING_LOCAL_EVENTS 11
 /* Count of all "real" monitoring events (not derived from other events) */
-#define _PY_MONITORING_UNGROUPED_EVENTS 15
+#define _PY_MONITORING_UNGROUPED_EVENTS 16
 /* Count of all  monitoring events */
-#define _PY_MONITORING_EVENTS 17
+#define _PY_MONITORING_EVENTS 19
 
 /* Tables of which tools are active for each monitored event. */
 typedef struct _Py_LocalMonitors {
@@ -131,7 +131,8 @@ typedef struct {
                                                                                \
     /* redundant values (derived from co_localsplusnames and                   \
        co_localspluskinds) */                                                  \
-    int co_nlocalsplus;           /* number of local + cell + free variables */ \
+    int co_nlocalsplus;           /* number of spaces for holding local, cell, \
+                                     and free variables */                     \
     int co_framesize;             /* Size of frame in words */                 \
     int co_nlocals;               /* number of local variables */              \
     int co_ncellvars;             /* total number of cell variables */         \
